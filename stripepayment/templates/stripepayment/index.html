@@ -1,0 +1,109 @@
+{% extends 'stripepayment/basetemplate.html' %}
+{% load static %}
+{% block content %}
+<script src="https://js.stripe.com/v3/"></script>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-6 payment">
+        <div class="row">
+            <div class="col donate">
+                <img src="{% static 'images/logo.png' %}">
+                <h3>Thank you for patronize me</h3>
+            </div>
+        </div>
+        <hr>
+        <form action="{% url 'charge' %}" method="post" id="payment-form">
+            {% csrf_token %}
+            <div class="form-field-12">
+                <label class="lb" for="amount">Choose Amount</label>
+                <select class="form-control" required name="amount" id="amount">
+                    <option selected value="5">Gift me a coffee ($5)</option>
+                    <option value="10">Support my content ($10)</option>
+                    <option value="25">Support my work ($25)</option>
+                    <option value="50">Life time support ($50)</option>
+                </select>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <input required type="text" class="form-control" name="email" placeholder="Email...">
+                </div>
+                <div class="col">
+                    <input required type="text" class="form-control" name="nickname" placeholder="Card holder's name...">
+                </div>
+            </div>
+            <div class="form-field-12">
+                <label class="lb" for="card-element">
+                    Credit or Debit card
+                </label>
+                <div id="card-element">
+                <!-- A Stripe Element will be inserted here. -->
+                </div>
+                <!-- Used to display form errors. -->
+                <div id="card-errors" role="alert"></div>
+            </div>
+            <input  class="myButton" type="submit" value="Submit Payment" name="">
+        </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    var stripe = Stripe('Your Public Key');
+    var elements = stripe.elements();
+    var style = {
+        base: {
+        color: '#32325d',
+        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+        fontSmoothing: 'antialiased',
+        fontSize: '16px',
+        '::placeholder': {
+            color: '#aab7c4'
+        }
+        },
+        invalid: {
+        color: '#fa755a',
+        iconColor: '#fa755a'
+        }
+    };
+
+    var card = elements.create('card', {hidePostalCode: true, style: style});
+    card.mount('#card-element');
+    card.addEventListener('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+        displayError.textContent = event.error.message;
+        } else {
+        displayError.textContent = '';
+        }
+    });
+
+    // Handle form submission.
+    var form = document.getElementById('payment-form');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        stripe.createToken(card).then(function(result) {
+        if (result.error) {
+            // Inform the user if there was an error.
+            var errorElement = document.getElementById('card-errors');
+            errorElement.textContent = result.error.message;
+        } else {
+            // Send the token to your server.
+            stripeTokenHandler(result.token);
+        }
+        });
+    });
+
+    function stripeTokenHandler(token) {
+        var form = document.getElementById('payment-form');
+        var hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'stripeToken');
+        hiddenInput.setAttribute('value', token.id);
+        form.appendChild(hiddenInput);
+
+        // Submit the form
+        form.submit();
+    }
+</script>
+{% endblock content %}
