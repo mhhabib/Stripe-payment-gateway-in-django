@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.http import JsonResponse
 import stripe
 
-stripe.api_key = "Your Secrect Key"
+stripe.api_key = "Your secrect key"
 
 
 def index(request):
